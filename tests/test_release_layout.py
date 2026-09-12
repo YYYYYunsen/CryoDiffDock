@@ -10,9 +10,16 @@ def test_required_release_paths_exist():
         "engines/local/inference.py",
         "engines/local/run_adaptive_density_search.py",
         "engines/global/inference_em.py",
+        "engines/global/rank_global.py",
         "preprocessing/build_ring_features.py",
         "configs/paper_inference.json",
         "checkpoints/manifest.json",
+        "install.sh",
+        "scripts/install_weights.py",
+        "scripts/verify_release.py",
+        "scripts/smoke_local.sh",
+        "scripts/smoke_global.sh",
+        "scripts/smoke_cascade.sh",
     ]
     assert all((ROOT / path).is_file() for path in required)
 
@@ -23,4 +30,3 @@ def test_checkpoint_manifest_has_all_model_roles():
         "local_score", "local_confidence", "global_score",
         "global_pretrained_backbone", "global_confidence",
     }
-

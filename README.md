@@ -14,8 +14,9 @@ density. This release tree contains the code paths for:
 
 The source code has been assembled into a standalone repository layout. It is
 not yet a complete archival release: the frozen paper checkpoints, their
-SHA-256 values, permanent download URLs, and a redistributable cryo-EM smoke
-test map must still be added. See `RELEASE_CHECKLIST.md`. Do not advertise exact
+remaining SHA-256 values, and permanent download URLs must still be added. A
+compact 6PEK/EMD-20327 smoke input is included, while its redistribution record
+still needs final confirmation. See `RELEASE_CHECKLIST.md`. Do not advertise exact
 paper reproducibility until `cryodiffdock doctor` reports every checkpoint.
 
 ## Installation
@@ -23,13 +24,17 @@ paper reproducibility until `cryodiffdock doctor` reports every checkpoint.
 CUDA 11.7 and a CUDA-capable GPU are recommended. Inference on CPU is possible
 for some Local stages but is substantially slower.
 
+Prepare a weight bundle with the layout documented in `checkpoints/README.md`,
+then run the automated installer:
+
 ```bash
-conda env create -f environment.yml
+./install.sh --weights /path/to/cryodiffdock-weights
 conda activate cryodiffdock
-python -m pip install --no-deps -e .
-python scripts/fetch_checkpoints.py
 cryodiffdock doctor
 ```
+
+After permanent checkpoint URLs are added to `checkpoints/manifest.json`,
+`./install.sh` without `--weights` will download and verify them automatically.
 
 `environment-local.yml` and `environment-global.yml` retain the original engine
 environments for debugging version-sensitive behavior.
@@ -51,8 +56,6 @@ cryodiffdock local \
   --ligand ligand.sdf \
   --map ligand_residual.mrc \
   --center 12.4 -3.1 28.7 \
-  --local-score-model checkpoints/local_score \
-  --local-confidence-model checkpoints/local_confidence \
   --output outputs/example_local
 ```
 
@@ -70,38 +73,33 @@ cryodiffdock global \
   --mask-structure full_model.cif \
   --ligand ligand.sdf \
   --map full_map.mrc \
-  --global-model checkpoints/global_score \
-  --pretrained-score-model checkpoints/global_pretrained/best_ema_inference_epoch_model.pt \
   --output outputs/example_global
 ```
 
-This command builds the 24 scalar and 6 vector ring channels and generates the
-Global pose ensemble. The checkpoint configuration remains authoritative for
-LoRA and architecture settings. The raw Global files are an ensemble; the
-paper's Top-1 result additionally uses the frozen confidence+density formula in
-`configs/paper_inference.json`.
+This command builds the 24 scalar and 6 vector ring channels, generates the
+Global pose ensemble, runs the frozen confidence model, and applies
+`confidence_z + 0.5*density_mean_z + residual_shape_corr_z`. Ranked results are
+written to `outputs/example_global/ranking/global_scores.csv`.
 
 ## Cascade
 
-The Cascade command starts from a Global score table produced by the frozen
-ranker. This explicit boundary prevents accidental replacement of the paper
-ranker with file order or density alone.
-
 ```bash
 cryodiffdock cascade \
-  --global-scores global_top20_scores.csv \
-  --source-manifest source_manifest.csv \
-  --cohort ids.txt \
-  --local-score-model checkpoints/local_score \
-  --local-confidence-model checkpoints/local_confidence \
-  --output outputs/cascade
+  --name example \
+  --protein receptor.pdb \
+  --mask-structure full_model.cif \
+  --ligand ligand.sdf \
+  --map full_map.mrc \
+  --output outputs/example_cascade
 ```
 
-The source manifest must contain `complex_name`, `experimental_protein`,
-`ligand`, `map_path`, and `mask_structure`. Cascade derives pocket centers and
-flexible residues only from predicted Global poses. The validation-frozen final
-parent selector and feature sealing code are retained under
-`paper_reproduction/evaluation`.
+Cascade performs Global generation and frozen ranking, takes the Global Top-5,
+derives each Local pocket centre and flexible residues from the predicted pose,
+and runs the released Local refinement. `final_pose.sdf` is the operational
+Global-rank-1 Cascade output; all five refined branches are retained under
+`search/v2_selected`. The validation selector experiments and feature-sealing
+code are retained under `paper_reproduction/evaluation` and are not silently
+applied to a new target.
 
 ## Paper reproduction
 
@@ -120,4 +118,3 @@ checkpoints and example map.
 Add the final CryoDiffDock bibliographic record here when the manuscript has a
 persistent identifier. Please also retain the DiffDock and DiffDock-Pocket
 citations and notices described in `THIRD_PARTY.md`.
-

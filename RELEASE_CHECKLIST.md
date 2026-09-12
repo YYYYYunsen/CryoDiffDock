@@ -4,7 +4,8 @@
 - [x] Provide one command-line entry point for Local, Global, and Cascade.
 - [x] Preserve frozen paper scripts and inference parameters.
 - [x] Retain upstream licenses and attribution.
-- [ ] Copy the exact frozen Local score and confidence checkpoints.
+- [x] Stage the exact Local score and confidence checkpoints locally and verify
+      their recorded SHA-256 values (large files remain excluded from Git).
 - [ ] Copy the exact frozen Global score, backbone, and confidence checkpoints.
 - [ ] Record SHA-256 values and permanent GitHub Release or Zenodo URLs in
       `checkpoints/manifest.json`.
@@ -13,5 +14,5 @@
 - [ ] Run Local, Global, and Cascade smoke tests from a fresh environment.
 - [ ] Publish benchmark cohort manifests or permanent dataset instructions.
 - [ ] Replace the provisional citation with the manuscript DOI/preprint URL.
-- [ ] Create a clean Git repository and inspect `git status` before pushing.
+- [x] Create a clean standalone Git repository and inspect `git status`.
 - [ ] Tag the exact paper release, for example `v1.0.0`.

@@ -6,6 +6,7 @@ import importlib.util
 import json
 import os
 from pathlib import Path
+import shutil
 import subprocess
 import sys
 
@@ -14,6 +15,7 @@ ROOT = Path(__file__).resolve().parents[2]
 LOCAL = ROOT / "engines" / "local"
 GLOBAL = ROOT / "engines" / "global"
 PREPROCESS = ROOT / "preprocessing"
+CHECKPOINTS = ROOT / "checkpoints"
 
 
 def run(command: list[str], cwd: Path) -> None:
@@ -68,7 +70,7 @@ def local_command(args) -> int:
         "--model_dir", str(args.local_score_model),
         "--filtering_model_dir", str(args.local_confidence_model),
         "--samples_per_complex", str(args.samples), "--batch_size", str(args.batch_size),
-        "--inference_steps", str(args.steps), "--seed", str(args.seed),
+        "--inference_steps", str(getattr(args, "local_steps", args.steps)), "--seed", str(args.seed),
     ]
     run(common + ["--out_dir", str(output / "baseline")], LOCAL)
     run(common + [
@@ -99,7 +101,7 @@ def local_command(args) -> int:
     return 0
 
 
-def global_command(args) -> int:
+def run_global_pipeline(args, output: Path) -> Path:
     output = args.output.resolve()
     output.mkdir(parents=True, exist_ok=True)
     ring = args.ring_features or output / "ring_features.npz"
@@ -116,31 +118,61 @@ def global_command(args) -> int:
         "--complex_name", args.name, "--out_dir", str(output / "poses"),
         "--model_dir", str(args.global_model), "--ckpt", args.global_ckpt,
         "--samples_per_complex", str(args.samples), "--batch_size", str(args.batch_size),
-        "--inference_steps", str(args.steps), "--seed", str(args.seed),
+        "--inference_steps", str(getattr(args, "global_steps", args.steps)), "--seed", str(args.seed),
     ]
     if args.pretrained_score_model:
         command += ["--pretrained_score_model", str(args.pretrained_score_model)]
     run(command, GLOBAL)
-    print(f"CryoDiffDock-Global generation complete: {output / 'poses' / args.name}")
-    print("The generated files are an unranked pose ensemble; use the released confidence/ranking workflow for paper-equivalent Top-1 selection.")
+    ranking = output / "ranking"
+    run([
+        sys.executable, "rank_global.py", "--name", args.name,
+        "--protein", str(args.protein), "--ligand", str(args.ligand),
+        "--map", str(args.map), "--ring-features", str(ring),
+        "--poses", str(output / "poses"),
+        "--confidence-model", str(args.global_confidence_model),
+        "--confidence-ckpt", args.global_confidence_ckpt,
+        "--output-dir", str(ranking),
+        "--top-k", str(min(args.ranking_top_k, args.samples)),
+        "--batch-size", str(args.batch_size),
+    ], GLOBAL)
+    return ranking / "global_scores.csv"
+
+
+def global_command(args) -> int:
+    output = args.output.resolve()
+    scores = run_global_pipeline(args, output)
+    print(f"CryoDiffDock-Global complete: {scores}")
     return 0
 
 
 def cascade_command(args) -> int:
-    """Run the released Global-Top-K to Local refinement stages.
-
-    Global scores must already contain the frozen confidence+density score. This
-    keeps the public command from silently substituting a different ranker.
-    """
+    """Run Global generation/ranking followed by Local Top-K refinement."""
     output = args.output.resolve()
+    if args.top_k > min(args.ranking_top_k, args.samples):
+        raise ValueError("--top-k cannot exceed the number of ranked Global samples")
+    global_output = output / "global"
+    global_scores = run_global_pipeline(args, global_output)
+    input_dir = output / "input"
+    input_dir.mkdir(parents=True, exist_ok=True)
+    source_manifest = input_dir / "source_manifest.csv"
+    cohort = input_dir / "ids.txt"
+    import pandas as pd
+    pd.DataFrame([{
+        "complex_name": args.name,
+        "experimental_protein": str(args.protein),
+        "ligand": str(args.ligand),
+        "map_path": str(args.map),
+        "mask_structure": str(args.mask_structure or args.protein),
+    }]).to_csv(source_manifest, index=False)
+    cohort.write_text(args.name + "\n")
     source = output / "source"
     prepared = output / "prepared"
     local_out = output / "local"
     source.mkdir(parents=True, exist_ok=True)
     run([
         sys.executable, "build_cascade_predicted_center_manifest.py",
-        "--global-scores", str(args.global_scores), "--source-manifest", str(args.source_manifest),
-        "--cohort", str(args.cohort), "--output-dir", str(source), "--top-k", str(args.top_k),
+        "--global-scores", str(global_scores), "--source-manifest", str(source_manifest),
+        "--cohort", str(cohort), "--output-dir", str(source), "--top-k", str(args.top_k),
         "--score-column", args.score_column, "--seed", str(args.seed),
         "--flexible-distance", "3.5", "--no-flexible-policy", "rigid", "--fail-on-error",
     ], LOCAL)
@@ -156,7 +188,7 @@ def cascade_command(args) -> int:
         "--model_dir", str(args.local_score_model),
         "--filtering_model_dir", str(args.local_confidence_model),
         "--samples_per_complex", str(args.samples), "--batch_size", str(args.batch_size),
-        "--inference_steps", str(args.steps), "--seed", str(args.seed),
+        "--inference_steps", str(args.local_steps), "--seed", str(args.seed),
     ]
     run(common + ["--out_dir", str(local_out / "baseline")], LOCAL)
     run(common + [
@@ -182,8 +214,15 @@ def cascade_command(args) -> int:
         "--rotation-steps", "10,20", "--torsion-steps", "30,60",
         "--top-torsion-gradients", "2", "--materialization-mode", "top1", "--fail-on-error",
     ], LOCAL)
-    print(f"Cascade branch refinement complete: {output / 'search' / 'v2_selected'}")
-    print("Apply the validation-frozen parent selector in paper_reproduction/evaluation for paper-equivalent final Top-1 selection.")
+    selected_root = output / "search" / "v2_selected"
+    rank1_dirs = sorted(selected_root.glob("index0___*"))
+    rank1_poses = sorted(rank1_dirs[0].glob("rank1_confidence*.sdf")) if len(rank1_dirs) == 1 else []
+    if len(rank1_poses) != 1:
+        raise RuntimeError("could not identify the refined Global-rank-1 Cascade pose")
+    final_pose = output / "final_pose.sdf"
+    shutil.copy2(rank1_poses[0], final_pose)
+    print(f"CryoDiffDock-Cascade complete: {final_pose}")
+    print(f"All {args.top_k} refined branches: {selected_root}")
     return 0
 
 
@@ -204,10 +243,15 @@ def doctor_command(args) -> int:
             record["sha256_ok"] = hashlib.sha256(path.read_bytes()).hexdigest() == item["sha256"]
         report["checkpoints"][name] = record
     print(json.dumps(report, indent=2))
-    return 0 if all(report[name] for name in modules) else 1
+    dependencies_ok = all(report[name] for name in modules)
+    checkpoints_ok = all(
+        item["exists"] and item.get("sha256_ok", True)
+        for item in report["checkpoints"].values()
+    )
+    return 0 if dependencies_ok and checkpoints_ok else 1
 
 
-def add_common(parser):
+def add_common(parser, *, steps: int = 30):
     parser.add_argument("--name", default="complex")
     parser.add_argument("--protein", required=True, type=existing)
     parser.add_argument("--ligand", required=True, type=existing)
@@ -215,7 +259,7 @@ def add_common(parser):
     parser.add_argument("--output", required=True, type=Path)
     parser.add_argument("--samples", type=int, default=40)
     parser.add_argument("--batch-size", type=int, default=10)
-    parser.add_argument("--steps", type=int, default=30)
+    parser.add_argument("--steps", type=int, default=steps)
     parser.add_argument("--seed", type=int, default=20260813)
 
 
@@ -228,33 +272,38 @@ def parser() -> argparse.ArgumentParser:
     add_common(local)
     local.add_argument("--center", nargs=3, type=float, required=True, metavar=("X", "Y", "Z"))
     local.add_argument("--flexible-sidechains")
-    local.add_argument("--local-score-model", required=True, type=existing)
-    local.add_argument("--local-confidence-model", required=True, type=existing)
+    local.add_argument("--local-score-model", type=existing, default=CHECKPOINTS / "local_score")
+    local.add_argument("--local-confidence-model", type=existing, default=CHECKPOINTS / "local_confidence")
     local.add_argument("--box-size", type=float, default=28.0)
     local.add_argument("--spacing", type=float, default=0.75)
     local.add_argument("--device", choices=["auto", "cpu", "cuda"], default="auto")
     local.set_defaults(func=local_command)
     glob = sub.add_parser("global", help="site-agnostic Global pose generation")
-    add_common(glob)
-    glob.add_argument("--global-model", required=True, type=existing)
+    add_common(glob, steps=20)
+    glob.add_argument("--global-model", type=existing, default=CHECKPOINTS / "global_score")
     glob.add_argument("--global-ckpt", default="best_ema_model.pt")
-    glob.add_argument("--pretrained-score-model", type=existing)
+    glob.add_argument("--pretrained-score-model", type=existing, default=CHECKPOINTS / "global_pretrained" / "best_ema_inference_epoch_model.pt")
+    glob.add_argument("--global-confidence-model", type=existing, default=CHECKPOINTS / "global_confidence")
+    glob.add_argument("--global-confidence-ckpt", default="best_model.pt")
+    glob.add_argument("--ranking-top-k", type=int, default=20)
     glob.add_argument("--ring-features", type=existing)
     glob.add_argument("--mask-structure", type=existing)
     glob.set_defaults(func=global_command)
-    cascade = sub.add_parser("cascade", help="refine frozen-ranked Global Top-K poses with Local")
-    cascade.add_argument("--global-scores", required=True, type=existing)
-    cascade.add_argument("--source-manifest", required=True, type=existing)
-    cascade.add_argument("--cohort", required=True, type=existing)
-    cascade.add_argument("--output", required=True, type=Path)
-    cascade.add_argument("--local-score-model", required=True, type=existing)
-    cascade.add_argument("--local-confidence-model", required=True, type=existing)
+    cascade = sub.add_parser("cascade", help="run Global ranking and Local Top-K refinement")
+    add_common(cascade, steps=20)
+    cascade.add_argument("--global-model", type=existing, default=CHECKPOINTS / "global_score")
+    cascade.add_argument("--global-ckpt", default="best_ema_model.pt")
+    cascade.add_argument("--pretrained-score-model", type=existing, default=CHECKPOINTS / "global_pretrained" / "best_ema_inference_epoch_model.pt")
+    cascade.add_argument("--global-confidence-model", type=existing, default=CHECKPOINTS / "global_confidence")
+    cascade.add_argument("--global-confidence-ckpt", default="best_model.pt")
+    cascade.add_argument("--ranking-top-k", type=int, default=20)
+    cascade.add_argument("--local-steps", type=int, default=30)
+    cascade.add_argument("--ring-features", type=existing)
+    cascade.add_argument("--mask-structure", type=existing)
+    cascade.add_argument("--local-score-model", type=existing, default=CHECKPOINTS / "local_score")
+    cascade.add_argument("--local-confidence-model", type=existing, default=CHECKPOINTS / "local_confidence")
     cascade.add_argument("--score-column", default="combined_at_best_weights")
     cascade.add_argument("--top-k", type=int, default=5)
-    cascade.add_argument("--samples", type=int, default=40)
-    cascade.add_argument("--batch-size", type=int, default=10)
-    cascade.add_argument("--steps", type=int, default=30)
-    cascade.add_argument("--seed", type=int, default=20260813)
     cascade.add_argument("--device", choices=["auto", "cpu", "cuda"], default="auto")
     cascade.set_defaults(func=cascade_command)
     return result
