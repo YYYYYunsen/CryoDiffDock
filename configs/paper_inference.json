@@ -1,0 +1,30 @@
+{
+  "seed": 20260813,
+  "local": {
+    "samples_per_condition": 40,
+    "inference_steps": 30,
+    "density_guidance_objective": "atom_density",
+    "density_guidance_lambda_translation": 0.5,
+    "density_guidance_lambda_rotation": 0.5,
+    "density_guidance_start_fraction": 0.6,
+    "ncc_sigma_A": 1.5,
+    "ncc_density_weight": 2.0,
+    "hierarchical_density_sigmas_A": [1.5, 2.25],
+    "hierarchical_parent_count": 6,
+    "hierarchical_search_depth": 3,
+    "hierarchical_beam_width": 48
+  },
+  "global": {
+    "samples_per_complex": 40,
+    "inference_steps": 20,
+    "ring_dim": 24,
+    "ring_vector_dim": 6,
+    "top_poses_for_ranking": 20,
+    "ranking_formula": "confidence_z + 0.5*density_mean_z + residual_shape_corr_z"
+  },
+  "cascade": {
+    "global_parent_count": 5,
+    "local_samples_per_condition_per_parent": 40
+  }
+}
+

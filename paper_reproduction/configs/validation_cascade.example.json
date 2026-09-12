@@ -1,0 +1,13 @@
+{
+  "output_root": "/Scr/yunsenz2/data/DiffDock-Pocket-EM/artifacts/paper_validation/global_to_local_druglike_v1",
+  "cohort": "/Scr/yunsenz2/data/DiffDock-Pocket-EM/artifacts/paper_validation/global_to_local_druglike_v1/00_cohort/ids.txt",
+  "val_split": "/Scr/yunsenz2/data/EM-dataset-final/data/splits_deposited_noncovalent_cofactor35_contact_entity_emdb_v1/em_val.txt",
+  "train_split": "/Scr/yunsenz2/data/EM-dataset-final/data/splits_deposited_noncovalent_cofactor35_contact_entity_emdb_v1/em_train.txt",
+  "test_split": "/Scr/yunsenz2/data/EM-dataset-final/data/splits_deposited_noncovalent_cofactor35_contact_entity_emdb_v1/em_test.txt",
+  "chemistry_manifest": "/Scr/yunsenz2/data/DiffDock-Pocket-EM/visualizations/figure2_global/input/raw/chemistry/chemistry_manifest.csv",
+  "test_chemistry_decisions": "/Scr/yunsenz2/data/DiffDock-Pocket-EM/paper_design/cohort_definitions/authoritative_druglike174_v1/chemistry_exclusions.csv",
+  "global_adapter": "/Scr/yunsenz2/data/DiffDock-Pocket-EM/scripts/global_validation_frozen_adapter.sh",
+  "global_scores": "/Scr/yunsenz2/data/DiffDock-Pocket-EM/artifacts/paper_validation/global_to_local_druglike_v1/global/global_top20_scores.csv",
+  "source_manifest": "/Scr/yunsenz2/data/DiffDock-Pocket-EM/artifacts/paper_validation/global_to_local_druglike_v1/inputs/source_full_polymer.csv",
+  "num_gpus": 4
+}

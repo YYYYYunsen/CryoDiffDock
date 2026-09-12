@@ -1,0 +1,30 @@
+{
+  "schema_version": 1,
+  "files": {
+    "local_score": {
+      "path": "checkpoints/local_score/best_ema_inference_epoch_model.pt",
+      "sha256": "09b7792029b28a1bfa402984846bfa627612a0920b883bde8a61dd40a7ba1f32",
+      "source": "TODO: verify this local v1.0.0 file is the frozen paper checkpoint, then publish it"
+    },
+    "local_confidence": {
+      "path": "checkpoints/local_confidence/best_model.pt",
+      "sha256": "d07e5303317e37d5d8566e40f08d4ac46c5a48b776902eb034d3f23989f2fa9e",
+      "source": "TODO: verify this local v1.0.0 file is the frozen paper checkpoint, then publish it"
+    },
+    "global_score": {
+      "path": "checkpoints/global_score/best_ema_model.pt",
+      "sha256": "",
+      "source": "TODO: copy the frozen paper checkpoint and publish it"
+    },
+    "global_pretrained_backbone": {
+      "path": "checkpoints/global_pretrained/best_ema_inference_epoch_model.pt",
+      "sha256": "",
+      "source": "TODO: publish the exact backbone used to restore BatchNorm statistics"
+    },
+    "global_confidence": {
+      "path": "checkpoints/global_confidence/best_model.pt",
+      "sha256": "",
+      "source": "TODO: publish the exact confidence checkpoint used for Top-20 ranking"
+    }
+  }
+}

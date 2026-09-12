@@ -1,0 +1,31 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "cryodiffdock"
+version = "0.1.0"
+description = "Cryo-EM density-guided generative ligand docking"
+readme = "README.md"
+requires-python = ">=3.9,<3.11"
+license = {file = "LICENSE"}
+authors = [{name = "Yunsen Zhang"}]
+dependencies = [
+  "numpy>=1.23,<2",
+  "pandas>=1.5,<3",
+  "PyYAML>=6",
+  "scipy>=1.10,<2",
+  "tqdm>=4.65",
+  "gemmi>=0.6.7",
+  "biopython>=1.81",
+]
+
+[project.scripts]
+cryodiffdock = "cryodiffdock.cli:main"
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]
+

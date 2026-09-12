@@ -1,0 +1,4 @@
+include README.md LICENSE LICENSE_DIFFDOCK CODE_OF_CONDUCT.md
+recursive-include configs *.yaml *.yml *.json
+recursive-include examples *.pdb *.sdf *.csv *.md
+
