@@ -9,7 +9,7 @@ CryoDiffDock 的统一命令包含三种模式：已知口袋的 Local、未知�
 权重目录必须符合 [`checkpoints/README.md`](checkpoints/README.md) 的结构，然后运行：
 
 ```bash
-git clone <CRYODIFFDOCK_GITHUB_URL>
+git clone https://github.com/YYYYYunsen/CryoDiffDock.git
 cd CryoDiffDock
 chmod +x install.sh
 ./install.sh --weights /path/to/cryodiffdock-weights
