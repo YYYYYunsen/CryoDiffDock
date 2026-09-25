@@ -43,7 +43,11 @@ cryodiffdock local \
   --output outputs/target_local
 ```
 
-最终结果位于 `outputs/target_local/search/v2_selected/`。
+默认运行冻结的 lazy PAAHS 精修；最终姿势位于
+`outputs/target_local/final_pose.sdf`，各阶段审计文件位于
+`outputs/target_local/paahs/`。`--no-paahs` 仅输出较早的 V2 Top-1。
+已有推理结果也可使用 `cryodiffdock paahs`，所需盲态表格格式见
+[`docs/PAAHS_PUBLIC_WORKFLOW.md`](docs/PAAHS_PUBLIC_WORKFLOW.md)。
 
 ## Global
 
@@ -73,10 +77,13 @@ cryodiffdock cascade \
   --output outputs/target_cascade
 ```
 
-该命令自动执行 Global 生成与冻结排序、提取 Top-5、从每个预测姿势推导口袋中心和柔性残基，
-再运行 Local 密度引导与层级搜索。直接交付结果为
-`outputs/target_cascade/final_pose.sdf`；五条精修分支保存在
-`outputs/target_cascade/search/v2_selected/`，方便检查和后续研究。
+该命令目前执行 Global 生成与冻结排序、提取 Top-5、从预测姿势推导口袋中心，
+再运行 Local V2 分支搜索。默认按论文规则对五条分支和原始 Global 姿势
+进行共享地图 NCC 评分：Local 姿势必须在两个尺度上均严格优于 Global，
+随后对 Global site rank、Local basin-NCC rank 和共享 NCC rank 做等权融合。
+`outputs/target_cascade/final_pose.sdf` 是最终选择的姿势，盲态选择记录在
+`selector/`；`--rank1-only` 可恢复旧的 Global rank-1 输出。规则不使用
+参考姿势或在该队列上拟合参数。完整的 Figure 7 数值回归仍列在发布清单中。
 
 ## 安装后自检
 

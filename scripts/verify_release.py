@@ -17,6 +17,15 @@ REQUIRED_FILES = (
     "configs/paper_inference.json", "examples/6PEK/receptor.pdb",
     "examples/6PEK/ligand.sdf", "examples/6PEK/local_map.mrc",
     "examples/6PEK/ring_features.npz",
+    "scripts/run_paahs_pipeline.py", "scripts/run_clash_aware_adaptive_hierarchical_search.py",
+    "evaluation/finalize_paahs_pipeline.py",
+    "engines/local/cryodiffdock_pocket/clash_repair.py",
+    "configs/clash_aware_adaptive_hierarchical_search_a.json",
+    "configs/density_repair_validation62_v2_frozen.json",
+    "configs/density_repair_v4_frozen.json",
+    "configs/caahs_a_sidechain_rescue_frozen.json",
+    "configs/caahs_c_frozen_joint050.json",
+    "configs/caahs_c_internal_geometry_frozen_d035.json",
 )
 MODULES = ("torch", "torch_geometric", "torch_scatter", "e3nn", "rdkit", "gemmi", "prody", "Bio")
 

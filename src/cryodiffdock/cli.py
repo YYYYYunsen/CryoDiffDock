@@ -18,9 +18,48 @@ PREPROCESS = ROOT / "preprocessing"
 CHECKPOINTS = ROOT / "checkpoints"
 
 
-def run(command: list[str], cwd: Path) -> None:
+def run(command: list[str], cwd: Path, *, env: dict[str, str] | None = None) -> None:
     print("+", " ".join(command), flush=True)
-    subprocess.run(command, cwd=cwd, check=True)
+    subprocess.run(command, cwd=cwd, env=env, check=True)
+
+
+def paahs_environment() -> dict[str, str]:
+    """Expose the Local engine to the frozen, repository-root paper scripts."""
+    env = os.environ.copy()
+    paths = [str(LOCAL), str(ROOT)]
+    if env.get("PYTHONPATH"):
+        paths.append(env["PYTHONPATH"])
+    env["PYTHONPATH"] = os.pathsep.join(paths)
+    return env
+
+
+def run_paahs(
+    baseline: Path, search_manifest: Path, scores: Path, output: Path,
+    expected_cases: int, workers: int, device: str, *, preflight_only: bool = False,
+) -> None:
+    command = [
+        sys.executable, str(ROOT / "scripts" / "run_paahs_pipeline.py"),
+        "--baseline-manifest", str(baseline),
+        "--search-manifest", str(search_manifest),
+        "--scores", str(scores),
+        "--output-root", str(output),
+        "--expected-cases", str(expected_cases),
+        "--workers", str(workers),
+        "--device", device,
+        "--directed-fallback-mode", "lazy",
+    ]
+    if preflight_only:
+        command.append("--preflight-only")
+    run(command, ROOT, env=paahs_environment())
+
+
+def paahs_command(args) -> int:
+    run_paahs(
+        args.baseline_manifest, args.search_manifest, args.scores,
+        args.output.resolve(), args.expected_cases, args.workers, args.device,
+        preflight_only=args.preflight_only,
+    )
+    return 0
 
 
 def existing(path: str) -> Path:
@@ -97,7 +136,37 @@ def local_command(args) -> int:
         "--rotation-steps", "10,20", "--torsion-steps", "30,60",
         "--top-torsion-gradients", "2", "--materialization-mode", "top1", "--fail-on-error",
     ], LOCAL)
-    print(f"CryoDiffDock-Local complete: {output / 'search' / 'v2_selected'}")
+    if args.no_paahs:
+        print(f"CryoDiffDock-Local V2-only complete: {output / 'search' / 'v2_selected'}")
+        return 0
+    import pandas as pd
+
+    rankings = sorted((output / "search" / "v2_selected").glob("index*___*/ranking.csv"))
+    if len(rankings) != 1:
+        raise RuntimeError(f"Expected one baseline V2 ranking, found {len(rankings)}")
+    ranking = pd.read_csv(rankings[0])
+    if len(ranking) != 1 or "materialized_path" not in ranking:
+        raise RuntimeError(f"Invalid V2 Top-1 ranking: {rankings[0]}")
+    baseline_pose = Path(str(ranking.iloc[0]["materialized_path"])).resolve()
+    if not baseline_pose.is_file():
+        raise FileNotFoundError(baseline_pose)
+    baseline = output / "paahs_baseline_manifest.csv"
+    pd.DataFrame([{
+        "case_order": 0,
+        "complex_name": args.name,
+        "baseline_pose_path": str(baseline_pose),
+        "protein_path": str(args.protein),
+        "density_crop": str(crop),
+    }]).to_csv(baseline, index=False)
+    run_paahs(
+        baseline, manifest, scores / "pose_scores.csv", output / "paahs",
+        1, args.paahs_workers, args.device,
+    )
+    final_pose = output / "paahs" / "final" / "cases" / args.name.upper() / "rank1.sdf"
+    if not final_pose.is_file():
+        raise FileNotFoundError(final_pose)
+    shutil.copy2(final_pose, output / "final_pose.sdf")
+    print(f"CryoDiffDock-Local PAAHS complete: {output / 'final_pose.sdf'}")
     return 0
 
 
@@ -148,6 +217,8 @@ def global_command(args) -> int:
 def cascade_command(args) -> int:
     """Run Global generation/ranking followed by Local Top-K refinement."""
     output = args.output.resolve()
+    if not args.rank1_only and args.top_k != 5:
+        raise ValueError("the frozen cross-branch selector requires --top-k 5")
     if args.top_k > min(args.ranking_top_k, args.samples):
         raise ValueError("--top-k cannot exceed the number of ranked Global samples")
     global_output = output / "global"
@@ -215,12 +286,31 @@ def cascade_command(args) -> int:
         "--top-torsion-gradients", "2", "--materialization-mode", "top1", "--fail-on-error",
     ], LOCAL)
     selected_root = output / "search" / "v2_selected"
-    rank1_dirs = sorted(selected_root.glob("index0___*"))
-    rank1_poses = sorted(rank1_dirs[0].glob("rank1_confidence*.sdf")) if len(rank1_dirs) == 1 else []
-    if len(rank1_poses) != 1:
-        raise RuntimeError("could not identify the refined Global-rank-1 Cascade pose")
     final_pose = output / "final_pose.sdf"
-    shutil.copy2(rank1_poses[0], final_pose)
+    if args.rank1_only:
+        rank1_dirs = sorted(selected_root.glob("index0___*"))
+        rank1_poses = sorted(rank1_dirs[0].glob("rank1_confidence*.sdf")) if len(rank1_dirs) == 1 else []
+        if len(rank1_poses) != 1:
+            raise RuntimeError("could not identify the refined Global-rank-1 Cascade pose")
+        shutil.copy2(rank1_poses[0], final_pose)
+    else:
+        selector = output / "selector"
+        run([
+            sys.executable, str(ROOT / "evaluation" / "upgrade_cascade_selection.py"),
+            "--cohort", str(cohort),
+            "--blind-manifest", str(manifest),
+            "--selected-root", str(selected_root),
+            "--output-dir", str(selector),
+            "--expected-n", "1",
+            "--selection-only", "--materialize-selected",
+        ], ROOT, env=paahs_environment())
+        selected_pose = (
+            selector / "selected_results" / "union_rank_fusion_guard"
+            / args.name.upper() / "rank1.sdf"
+        )
+        if not selected_pose.is_file():
+            raise FileNotFoundError(selected_pose)
+        shutil.copy2(selected_pose, final_pose)
     print(f"CryoDiffDock-Cascade complete: {final_pose}")
     print(f"All {args.top_k} refined branches: {selected_root}")
     return 0
@@ -277,7 +367,19 @@ def parser() -> argparse.ArgumentParser:
     local.add_argument("--box-size", type=float, default=28.0)
     local.add_argument("--spacing", type=float, default=0.75)
     local.add_argument("--device", choices=["auto", "cpu", "cuda"], default="auto")
+    local.add_argument("--paahs-workers", type=int, default=4)
+    local.add_argument("--no-paahs", action="store_true", help="stop at legacy V2 Top-1")
     local.set_defaults(func=local_command)
+    paahs = sub.add_parser("paahs", help="run frozen lazy PAAHS on a blind manifest")
+    paahs.add_argument("--baseline-manifest", required=True, type=existing)
+    paahs.add_argument("--search-manifest", required=True, type=existing)
+    paahs.add_argument("--scores", required=True, type=existing)
+    paahs.add_argument("--output", required=True, type=Path)
+    paahs.add_argument("--expected-cases", required=True, type=int)
+    paahs.add_argument("--workers", type=int, default=4)
+    paahs.add_argument("--device", choices=["auto", "cpu", "cuda"], default="auto")
+    paahs.add_argument("--preflight-only", action="store_true")
+    paahs.set_defaults(func=paahs_command)
     glob = sub.add_parser("global", help="site-agnostic Global pose generation")
     add_common(glob, steps=20)
     glob.add_argument("--global-model", type=existing, default=CHECKPOINTS / "global_score")
@@ -304,6 +406,7 @@ def parser() -> argparse.ArgumentParser:
     cascade.add_argument("--local-confidence-model", type=existing, default=CHECKPOINTS / "local_confidence")
     cascade.add_argument("--score-column", default="combined_at_best_weights")
     cascade.add_argument("--top-k", type=int, default=5)
+    cascade.add_argument("--rank1-only", action="store_true", help="retain the older Global-rank-1 output")
     cascade.add_argument("--device", choices=["auto", "cpu", "cuda"], default="auto")
     cascade.set_defaults(func=cascade_command)
     return result

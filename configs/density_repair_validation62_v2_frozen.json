@@ -1,0 +1,12 @@
+{
+  "configs": {
+    "directed_b8_d3_frozen": {
+      "search_depth": 3,
+      "beam_size": 8,
+      "minimum_beam_rmsd_A": 0.04,
+      "intermediate_displacement_slack_A": 0.05,
+      "intermediate_ncc_slack": 0.005,
+      "generic_proposals": true
+    }
+  }
+}

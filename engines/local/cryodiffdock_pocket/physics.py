@@ -21,6 +21,17 @@ VDW_RADII = {
     "U": 1.86,
 }
 
+# Values returned by RDKit's PeriodicTable.GetRvdw for the elements expected
+# in drug-like ligands and standard protein ATOM records.  PoseBusters uses
+# this convention for its relative minimum-distance check.  This deliberately
+# differs from the historical project table above (for example O: 1.55 versus
+# 1.52 and F: 1.50 versus 1.47).
+RDKIT_VDW_RADII = {
+    "H": 1.20, "B": 1.92, "C": 1.70, "N": 1.60, "O": 1.55,
+    "F": 1.50, "Si": 2.10, "P": 1.95, "S": 1.80, "Cl": 1.80,
+    "Br": 1.90, "I": 2.10,
+}
+
 
 def _normalise_element(value: object) -> str:
     text = str(value or "").strip()
@@ -34,6 +45,70 @@ def atom_radii(elements) -> np.ndarray:
         [VDW_RADII.get(_normalise_element(element), 2.0) for element in elements],
         dtype=np.float64,
     )
+
+
+def rdkit_vdw_radii(elements) -> np.ndarray:
+    """Return the RDKit periodic-table vdW radii used by PoseBusters.
+
+    Keep this separate from :func:`atom_radii`: the latter is the historical
+    project clash definition and must remain frozen for published endpoints.
+    """
+
+    values = []
+    table = None
+    for element in elements:
+        symbol = _normalise_element(element)
+        if symbol in RDKIT_VDW_RADII:
+            values.append(RDKIT_VDW_RADII[symbol])
+            continue
+        if table is None:
+            try:
+                from rdkit import Chem
+            except ImportError as error:
+                raise ValueError(
+                    f"No frozen PoseBusters/RDKit vdW radius for {symbol!r} "
+                    "and RDKit is unavailable"
+                ) from error
+            table = Chem.GetPeriodicTable()
+        atomic_number = int(table.GetAtomicNumber(symbol))
+        if atomic_number <= 0:
+            raise ValueError(f"Unknown element for RDKit vdW radius: {element!r}")
+        values.append(float(table.GetRvdw(atomic_number)))
+    return np.asarray(values, dtype=np.float64)
+
+
+def relative_vdw_clashes(
+    protein_coordinates: np.ndarray,
+    protein_elements,
+    ligand_coordinates: np.ndarray,
+    ligand_elements,
+    *,
+    minimum_relative_distance: float = 0.75,
+) -> tuple[int, float, np.ndarray]:
+    """Return element-pair-scaled protein--ligand contact violations.
+
+    Relative distance is ``d_ij / (r_i + r_j)``.  Values below the requested
+    lower bound are violations.  The default 0.75 is the frozen CAAHS-C gate.
+    """
+
+    protein_coordinates = np.asarray(protein_coordinates, dtype=np.float64)
+    ligand_coordinates = np.asarray(ligand_coordinates, dtype=np.float64)
+    distance = np.linalg.norm(
+        protein_coordinates[:, None, :] - ligand_coordinates[None, :, :], axis=-1
+    )
+    radius_sum = (
+        rdkit_vdw_radii(protein_elements)[:, None]
+        + rdkit_vdw_radii(ligand_elements)[None, :]
+    )
+    relative = np.divide(
+        distance,
+        radius_sum,
+        out=np.full_like(distance, np.inf),
+        where=radius_sum > 0,
+    )
+    violations = relative < float(minimum_relative_distance)
+    minimum = float(relative.min()) if relative.size else float("inf")
+    return int(violations.sum()), minimum, violations
 
 
 def read_protein_heavy_atoms(path: str | Path):

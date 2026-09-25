@@ -1,0 +1,27 @@
+{
+  "method": "Clash-Aware Adaptive Hierarchical Search",
+  "phase": "A",
+  "selection_policy": "clash-aware generation with conservative clash-free Top-1 replacement",
+  "steric_parent_slots": 2,
+  "steric_parent_max_ncc_drop": 0.02,
+  "steric_beam_fraction": 0.25,
+  "steric_rescue_max_ncc_drop": 0.02,
+  "steric_rescue_max_anchor_rmsd_A": 0.75,
+  "clash_aware_final_max_ncc_drop": 0.02,
+  "clash_aware_final_max_anchor_rmsd_A": 0.75,
+  "conservative_fallback": {
+    "status": "development_frozen",
+    "baseline": "original_frozen_top1",
+    "require_old_clashing": true,
+    "require_new_clash_free": true,
+    "maximum_old_to_new_displacement_A": 1.5,
+    "maximum_ncc_drop": 0.02,
+    "accept_partial_clash_reduction": false,
+    "otherwise": "retain_original_frozen_top1",
+    "displacement_definition": "symmetry_rmsd_between_predictions",
+    "uses_reference_or_rmsd_to_native_for_selection": false
+  },
+  "severe_overlap_A": 0.8,
+  "uses_reference_or_rmsd_for_selection": false,
+  "chemical_interactions_used_for_selection": false
+}

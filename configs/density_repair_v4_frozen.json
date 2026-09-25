@@ -1,0 +1,25 @@
+{
+  "configs": {
+    "v4_frozen": {
+      "search_depth": 3,
+      "beam_size": 8,
+      "minimum_beam_rmsd_A": 0.04,
+      "intermediate_displacement_slack_A": 0.05,
+      "intermediate_ncc_slack": 0.005,
+      "generic_proposals": true,
+      "adaptive_early_stop": true,
+      "density_prescreen_multiplier": 2,
+      "protein_neighbor_radius_A": 6.0,
+      "method_version": "density_preserving_repair_v4_frozen"
+    }
+  },
+  "continuous_fallback": {
+    "trigger_max_v2_residual_clashes": 1,
+    "optimization_mode": "fast",
+    "num_starts": 2,
+    "max_iterations": 30,
+    "max_torsion_bonds": 8,
+    "accept_only_strict_severe_clash_reduction": true,
+    "early_stop_on_clash_free": true
+  }
+}

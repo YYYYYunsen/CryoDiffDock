@@ -1,0 +1,31 @@
+{
+  "status": "development_frozen",
+  "method": "CAAHS-C restrained ligand internal-geometry refinement",
+  "frozen_after": "Development87",
+  "development_cases_n": 87,
+  "development_baseline_internal_pass_n": 79,
+  "development_final_internal_pass_n": 81,
+  "development_new_internal_rescues_n": 2,
+  "development_baseline_successes_lost_n": 0,
+  "development_rescues_full_posebusters_valid_n": 2,
+  "development_rescues_posebusters_evaluated_n": 2,
+  "frozen_configuration": {
+    "name": "ig_d035",
+    "maximum_atom_displacements_A": "0.05,0.10,0.20,0.35",
+    "force_constants": "1000,300,100",
+    "maximum_iterations": 300,
+    "maximum_ligand_rmsd_A": 0.35
+  },
+  "shared_hard_gates": {
+    "minimum_relative_vdw_distance": 0.77,
+    "maximum_ncc_drop": 0.02,
+    "maximum_interaction_drop": 0.05,
+    "severe_overlap_A": 0.8,
+    "require_internal_steric_clash_pass": true,
+    "require_bond_lengths_pass": true,
+    "require_bond_angles_pass": true,
+    "fallback_to_baseline": true
+  },
+  "selection_principle": "Strict internal-geometry rescue only; retain baseline otherwise. No native/reference RMSD used.",
+  "uses_reference_or_native_rmsd": false
+}

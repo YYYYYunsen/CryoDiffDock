@@ -1,0 +1,52 @@
+{
+  "method": "CAAHS-C",
+  "status": "development_frozen",
+  "frozen_on": "development87",
+  "baseline": "frozen CAAHS-A+SC-interaction",
+  "frozen_variant": "c_joint050",
+  "frozen_configuration": {
+    "name": "c_joint050",
+    "mode": "joint",
+    "maximum_ligand_displacement_A": 0.5,
+    "target_relative_vdw_distance": 0.77,
+    "optimization_relative_vdw_distance": 0.78,
+    "acceptance_relative_vdw_distance": 0.75,
+    "maximum_ncc_drop": 0.02,
+    "maximum_interaction_drop": 0.05,
+    "severe_overlap_A": 0.8,
+    "rotation_bound_degrees": 5.0,
+    "maximum_iterations": 30,
+    "number_of_starts": 4,
+    "joint_top_k": 4,
+    "sidechain_beam_width": 16,
+    "sidechain_coordinate_rounds": 2,
+    "maximum_target_residues": 3,
+    "maximum_sidechain_displacement_A": 1.5
+  },
+  "development_evidence": {
+    "variant": "c_joint050",
+    "cases_n": 87,
+    "baseline_pass_n": 57,
+    "selected_pass_n": 73,
+    "new_rescues_n": 16,
+    "baseline_passes_lost_n": 0,
+    "baseline_residual_relative_clashes": 156,
+    "selected_residual_relative_clashes": 134,
+    "selected_cases_n": 16,
+    "maximum_ligand_displacement_A": 0.3750608480735695,
+    "worst_delta_ncc": -0.0185487306803023,
+    "worst_interaction_geometry_change": -0.0227428937774293,
+    "runtime_hours": 0.1777118763545554,
+    "uses_reference_or_native_rmsd": false
+  },
+  "posebusters_0_6_5_confirmation": {
+    "rescues_evaluated_n": 16,
+    "minimum_distance_pass_n": 16,
+    "volume_overlap_pass_n": 16,
+    "minimum_observed_relative_distance": 0.7703922281693403,
+    "protein_pairwise_clashes_total": 0,
+    "internal_steric_clash_pass_n": 14
+  },
+  "selection_used_reference_or_native_rmsd": false,
+  "scope": "Protein-ligand minimum-distance and volume-overlap rescue. Ligand internal geometry is evaluated separately."
+}

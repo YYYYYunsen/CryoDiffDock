@@ -1,0 +1,43 @@
+{
+  "method": "CAAHS-A+SC-interaction",
+  "status": "development_frozen",
+  "baseline": "CAAHS-A plus frozen V4 plus residual-1 continuous fallback",
+  "frozen_on": "development87",
+  "development_evidence": {
+    "cases_n": 87,
+    "baseline_clash_free_n": 67,
+    "frozen_method_clash_free_n": 73,
+    "new_clash_free_rescues_n": 6,
+    "baseline_successes_lost_n": 0,
+    "baseline_residual_clashes": 143,
+    "frozen_method_residual_clashes": 131,
+    "ligand_coordinates_changed": false,
+    "reference_or_native_rmsd_used": false
+  },
+  "frozen_configuration": {
+    "selection_mode": "interaction",
+    "chi_offsets_degrees": [-60.0, -30.0, 30.0, 60.0],
+    "beam_width": 16,
+    "coordinate_rounds": 2,
+    "maximum_target_residues": 3,
+    "maximum_sidechain_displacement_A": 1.5,
+    "maximum_interaction_geometry_drop": 0.05,
+    "severe_overlap_A": 0.8,
+    "maximum_introduced_internal_protein_clashes": 0,
+    "ligand_coordinates_fixed": true,
+    "backbone_coordinates_fixed": true,
+    "uses_reference_or_native_rmsd_for_selection": false
+  },
+  "selection_hierarchy": [
+    "ligand coordinates fixed",
+    "protein backbone coordinates fixed",
+    "zero severe ligand-protein clashes",
+    "zero newly introduced internal protein clashes",
+    "side-chain displacement within 1.5 A",
+    "interaction geometry drop no greater than 0.05",
+    "maximize interaction-compatible geometry quality",
+    "minimize chi-angle penalty and side-chain displacement on ties"
+  ],
+  "interaction_interpretation": "Geometric compatibility only; it is not a binding-energy or hydrogen-bond assignment.",
+  "next_evaluation": "Run exactly once on holdout38 without parameter changes."
+}

@@ -4,7 +4,8 @@ CryoDiffDock combines generative molecular docking with experimental cryo-EM
 density. This release tree contains the code paths for:
 
 - **CryoDiffDock-Local**: known-pocket diffusion, late-stage density guidance,
-  density/ confidence reranking, and hierarchical local search.
+  density/confidence reranking, hierarchical search, and final lazy PAAHS
+  physical refinement.
 - **CryoDiffDock-Global**: site-agnostic diffusion conditioned on scalar and
   vector cryo-EM ring features.
 - **CryoDiffDock-Cascade**: Global Top-5 site proposals followed by the frozen
@@ -17,7 +18,8 @@ not yet a complete archival release: the frozen paper checkpoints, their
 remaining SHA-256 values, and permanent download URLs must still be added. A
 compact 6PEK/EMD-20327 smoke input is included, while its redistribution record
 still needs final confirmation. See `RELEASE_CHECKLIST.md`. Do not advertise exact
-paper reproducibility until `cryodiffdock doctor` reports every checkpoint.
+paper reproducibility until the checkpoints are verified and the pending
+end-to-end numerical regression tests are complete.
 
 ## Installation
 
@@ -60,9 +62,17 @@ cryodiffdock local \
 ```
 
 The command runs matched baseline and density-guided ensembles, scores their
-union with Gaussian NCC, and performs the released three-depth hierarchical
-search. The final materialized pose is under `outputs/example_local/search`.
-Use `--flexible-sidechains A:10-A:14` to specify flexible residues explicitly.
+union with Gaussian NCC, performs the V2 hierarchical search, and then runs the
+frozen three-phase lazy PAAHS pipeline. The delivered pose is
+`outputs/example_local/final_pose.sdf`; stage audits are under
+`outputs/example_local/paahs/`. Use `--no-paahs` only to stop at the earlier V2
+Top-1 output. Use `--flexible-sidechains A:10-A:14` to specify flexible residues
+explicitly.
+
+To run the same reference-free PAAHS pipeline on already generated ensembles,
+use `cryodiffdock paahs` with the blind baseline/search manifests and per-pose
+NCC table. The exact column contract and frozen configuration files are
+documented in [the PAAHS workflow](docs/PAAHS_PUBLIC_WORKFLOW.md).
 
 ## Global
 
@@ -95,19 +105,30 @@ cryodiffdock cascade \
 
 Cascade performs Global generation and frozen ranking, takes the Global Top-5,
 derives each Local pocket centre and flexible residues from the predicted pose,
-and runs the released Local refinement. `final_pose.sdf` is the operational
-Global-rank-1 Cascade output; all five refined branches are retained under
-`search/v2_selected`. The validation selector experiments and feature-sealing
-code are retained under `paper_reproduction/evaluation` and are not silently
-applied to a new target.
+and runs V2 Local refinement on each branch. It then compares all five branch
+poses with the original Global pose under the same five density crops, requires
+a strictly positive multiscale-NCC gain over Global, and applies equal-weight
+reciprocal-rank fusion of Global site rank, Local basin-NCC rank, and shared-map
+NCC rank. `final_pose.sdf` is the selected output; the blind candidate scores
+and choices are under `selector/`. Use `--rank1-only` to recover the older
+Global-rank-1 output. The released selector is reference-free and has no
+cohort-fitted parameters. A full numerical regression of the one-command
+implementation against the paper's Figure 7 archive remains on the release
+checklist.
 
 ## Paper reproduction
 
 `configs/paper_inference.json` records the main frozen inference parameters.
-The original cohort construction, leakage checks, evaluation, sharding, and
-selector scripts are preserved under `paper_reproduction/`. Server paths in
-those historical launchers are provenance examples and must be supplied through
-their documented environment variables on another system.
+The final PAAHS scripts and frozen JSON configurations are under `scripts/`,
+`evaluation/`, and `configs/`; Figure 5 repeated-inference, Q-score, and
+cross-run selection analysis code is under `evaluation/`. The optional Q-score
+selector is not part of the default Local/Cascade commands; its original
+173-case lock file is not yet included. Historical cohort
+construction, leakage checks, and sharding scripts remain under
+`paper_reproduction/`. Server paths in historical launchers are provenance
+examples and must be supplied through their documented environment variables
+on another system. The new scripts do not contain server datasets or generated
+results.
 
 Run `python -m compileall src engines preprocessing scripts` as a lightweight
 source check. Full smoke and numerical regression tests require the released

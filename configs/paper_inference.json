@@ -12,7 +12,17 @@
     "hierarchical_density_sigmas_A": [1.5, 2.25],
     "hierarchical_parent_count": 6,
     "hierarchical_search_depth": 3,
-    "hierarchical_beam_width": 48
+    "hierarchical_beam_width": 48,
+    "final_refinement": "three_phase_lazy_paahs",
+    "paahs_directed_fallback_mode": "lazy",
+    "paahs_frozen_configs": [
+      "clash_aware_adaptive_hierarchical_search_a.json",
+      "density_repair_validation62_v2_frozen.json",
+      "density_repair_v4_frozen.json",
+      "caahs_a_sidechain_rescue_frozen.json",
+      "caahs_c_frozen_joint050.json",
+      "caahs_c_internal_geometry_frozen_d035.json"
+    ]
   },
   "global": {
     "samples_per_complex": 40,
@@ -24,7 +34,9 @@
   },
   "cascade": {
     "global_parent_count": 5,
-    "local_samples_per_condition_per_parent": 40
+    "local_samples_per_condition_per_parent": 40,
+    "public_cli_output_rule": "equal_reciprocal_rank_fusion_after_positive_multiscale_ncc_guard",
+    "paper_cross_branch_selector": "equal_reciprocal_rank_fusion_after_positive_multiscale_ncc_guard",
+    "paper_selector_integrated_in_public_cli": true
   }
 }
-
