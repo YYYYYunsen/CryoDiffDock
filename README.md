@@ -1,5 +1,7 @@
 # CryoDiffDock
 
+![Graphical abstract of cryo-EM density-guided ligand docking](docs/assets/graphical_abstract.png)
+
 CryoDiffDock combines generative molecular docking with experimental cryo-EM
 density. This release tree contains the code paths for:
 

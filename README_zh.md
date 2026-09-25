@@ -1,5 +1,7 @@
 # CryoDiffDock 安装与使用
 
+![CryoDiffDock 图片摘要](docs/assets/graphical_abstract.png)
+
 CryoDiffDock 的统一命令包含三种模式：已知口袋的 Local、未知口袋的 Global，
 以及 Global Top-5 接 Local 精修的 Cascade。
 
