@@ -173,7 +173,6 @@ def local_command(args) -> int:
 
 
 def run_global_pipeline(args, output: Path) -> Path:
-    output = args.output.resolve()
     output.mkdir(parents=True, exist_ok=True)
     ring = args.ring_features or output / "ring_features.npz"
     if args.ring_features is None:
@@ -182,6 +181,7 @@ def run_global_pipeline(args, output: Path) -> Path:
             "--structure", str(args.protein), "--map", str(args.map), "--out", str(ring),
             "--pdb-id", args.name, "--mask-structure", str(args.mask_structure or args.protein),
             "--mask-policy", "full_polymer", "--normalize", "percentile",
+            "--radii", "4", "5", "6", "7", "8", "9",
         ], PREPROCESS)
     command = [
         sys.executable, "inference_em.py", "--protein_path", str(args.protein),

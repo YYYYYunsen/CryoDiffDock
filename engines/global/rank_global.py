@@ -58,15 +58,15 @@ def main() -> int:
     confidence_table = pd.read_csv(pose_dir / "confidence_ranking.csv")
     entries = []
     for row in confidence_table.head(args.top_k).itertuples(index=False):
-        rank = int(row.new_rank)
-        matches = sorted(pose_dir.glob(f"rank{rank}_confidence*.sdf"))
-        if len(matches) != 1:
-            raise RuntimeError(f"expected one confidence pose for rank {rank}, found {len(matches)}")
-        entries.append((int(row.original_rank), float(row.confidence), matches[0].resolve()))
+        confidence = float(row.confidence)
+        pose = pose_dir / row.ranked_file
+        if not pose.is_file():
+            raise FileNotFoundError(pose)
+        entries.append((int(row.original_rank), confidence, pose.resolve()))
     if len(entries) != args.top_k:
         raise RuntimeError(f"expected {args.top_k} confidence-ranked poses, found {len(entries)}")
 
-    protein_xyz = density.read_protein_heavy_coords(args.protein)
+    protein_xyz = density.read_protein_heavy_coords(str(args.protein))
     handle, grid = density.open_map(str(args.map))
     try:
         features = []

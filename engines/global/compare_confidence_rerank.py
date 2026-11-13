@@ -203,11 +203,7 @@ def build_dataset(df, model_args, out_dir, esm_embeddings_path=None):
                 use_lm_embeddings = False
                 precomputed_lm_embeddings = None
         else:
-            logger.warning(
-                'Model config requests LM embeddings but --esm_embeddings_path not provided; '
-                'building graph without LM embeddings (model accuracy may be reduced).'
-            )
-            use_lm_embeddings = False
+            logger.info('Computing ESM embeddings from the input receptor structures.')
 
     dataset = InferenceDataset(
         out_dir=out_dir,
@@ -500,12 +496,12 @@ def score_and_write_pose_set(
 
             write_dir = out_dir / complex_name
             write_dir.mkdir(parents=True, exist_ok=True)
-            summary = ['new_rank,original_rank,confidence,source_file']
+            summary = ['new_rank,original_rank,confidence,source_file,ranked_file']
             for new_rank, item in enumerate(scored, start=1):
                 out_name = f'rank{new_rank}_confidence{item["confidence"]:.4f}.sdf'
                 write_mol_with_coords(item['pose_mol'], item['pose_coords'], str(write_dir / out_name))
                 summary.append(
-                    f'{new_rank},{item["original_rank"]},{item["confidence"]:.6f},{item["pose_path"].name}'
+                    f'{new_rank},{item["original_rank"]},{item["confidence"]:.6f},{item["pose_path"].name},{out_name}'
                 )
             (write_dir / 'confidence_ranking.csv').write_text('\n'.join(summary) + '\n')
             processed += 1
