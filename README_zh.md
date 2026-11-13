@@ -45,7 +45,8 @@ cryodiffdock local \
   --output outputs/target_local
 ```
 
-默认运行冻结的 lazy PAAHS 精修；最终姿势位于
+默认在扩散采样阶段固定受体，再运行冻结的 lazy PAAHS 精修。条件物理修复可调整附近侧链。
+可用 `--flexible-sidechains A:10-A:14` 在扩散采样中启用指定残基的侧链移动。最终姿势位于
 `outputs/target_local/final_pose.sdf`，各阶段审计文件位于
 `outputs/target_local/paahs/`。`--no-paahs` 仅输出较早的 V2 Top-1。
 已有推理结果也可使用 `cryodiffdock paahs`，所需盲态表格格式见
@@ -79,8 +80,8 @@ cryodiffdock cascade \
   --output outputs/target_cascade
 ```
 
-该命令目前执行 Global 生成与冻结排序、提取 Top-5、从预测姿势推导口袋中心，
-再运行 Local V2 分支搜索。默认按论文规则对五条分支和原始 Global 姿势
+该命令执行 Global 生成与冻结排序、提取 Top-5，并从预测姿势推导口袋中心。
+各 Local 分支以固定受体采样，再运行 V2 搜索。默认按论文规则对五条分支和原始 Global 姿势
 进行共享地图 NCC 评分：Local 姿势必须在两个尺度上均严格优于 Global，
 随后对 Global site rank、Local basin-NCC rank 和共享 NCC rank 做等权融合。
 `outputs/target_cascade/final_pose.sdf` 是最终选择的姿势，盲态选择记录在

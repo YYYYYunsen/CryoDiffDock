@@ -2,6 +2,7 @@
   "seed": 20260813,
   "local": {
     "samples_per_condition": 40,
+    "sampling_receptor_mode": "rigid",
     "inference_steps": 30,
     "density_guidance_objective": "atom_density",
     "density_guidance_lambda_translation": 0.5,
@@ -35,6 +36,7 @@
   "cascade": {
     "global_parent_count": 5,
     "local_samples_per_condition_per_parent": 40,
+    "local_sampling_receptor_mode": "rigid",
     "public_cli_output_rule": "equal_reciprocal_rank_fusion_after_positive_multiscale_ncc_guard",
     "paper_cross_branch_selector": "equal_reciprocal_rank_fusion_after_positive_multiscale_ncc_guard",
     "paper_selector_integrated_in_public_cli": true

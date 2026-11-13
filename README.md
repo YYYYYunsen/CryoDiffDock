@@ -63,13 +63,14 @@ cryodiffdock local \
   --output outputs/example_local
 ```
 
-The command runs matched baseline and density-guided ensembles, scores their
-union with Gaussian NCC, performs the V2 hierarchical search, and then runs the
-frozen three-phase lazy PAAHS pipeline. The delivered pose is
+The command samples matched baseline and density-guided ensembles with a fixed
+receptor, scores their union with Gaussian NCC, performs the V2 hierarchical
+search, and then runs the frozen three-phase lazy PAAHS pipeline. Conditional
+physical repair can adjust nearby side chains. The delivered pose is
 `outputs/example_local/final_pose.sdf`; stage audits are under
 `outputs/example_local/paahs/`. Use `--no-paahs` only to stop at the earlier V2
-Top-1 output. Use `--flexible-sidechains A:10-A:14` to specify flexible residues
-explicitly.
+Top-1 output. Use `--flexible-sidechains A:10-A:14` to enable flexible sampling
+for specified residues.
 
 To run the same reference-free PAAHS pipeline on already generated ensembles,
 use `cryodiffdock paahs` with the blind baseline/search manifests and per-pose
@@ -106,12 +107,12 @@ cryodiffdock cascade \
 ```
 
 Cascade performs Global generation and frozen ranking, takes the Global Top-5,
-derives each Local pocket centre and flexible residues from the predicted pose,
-and runs V2 Local refinement on each branch. It then compares all five branch
-poses with the original Global pose under the same five density crops, requires
-a strictly positive multiscale-NCC gain over Global, and applies equal-weight
-reciprocal-rank fusion of Global site rank, Local basin-NCC rank, and shared-map
-NCC rank. `final_pose.sdf` is the selected output; the blind candidate scores
+and derives each Local pocket centre from the predicted pose. Each Local branch
+samples poses with a fixed receptor and runs V2 Local refinement. Cascade then
+compares all five branch poses with the original Global pose under the same five
+density crops, requires a strictly positive multiscale-NCC gain over Global, and
+applies equal-weight reciprocal-rank fusion of Global site rank, Local basin-NCC
+rank, and shared-map NCC rank. `final_pose.sdf` is the selected output; the blind candidate scores
 and choices are under `selector/`. Use `--rank1-only` to recover the older
 Global-rank-1 output. The released selector is reference-free and has no
 cohort-fitted parameters. A full numerical regression of the one-command

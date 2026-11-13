@@ -111,6 +111,8 @@ def local_command(args) -> int:
         "--samples_per_complex", str(args.samples), "--batch_size", str(args.batch_size),
         "--inference_steps", str(getattr(args, "local_steps", args.steps)), "--seed", str(args.seed),
     ]
+    if not args.flexible_sidechains:
+        common.append("--rigid")
     run(common + ["--out_dir", str(output / "baseline")], LOCAL)
     run(common + [
         "--density_guidance", "--density_guidance_objective", "atom_density",
@@ -260,6 +262,7 @@ def cascade_command(args) -> int:
         "--filtering_model_dir", str(args.local_confidence_model),
         "--samples_per_complex", str(args.samples), "--batch_size", str(args.batch_size),
         "--inference_steps", str(args.local_steps), "--seed", str(args.seed),
+        "--rigid",
     ]
     run(common + ["--out_dir", str(local_out / "baseline")], LOCAL)
     run(common + [
@@ -361,7 +364,11 @@ def parser() -> argparse.ArgumentParser:
     local = sub.add_parser("local", help="known-pocket Local inference and hierarchical search")
     add_common(local)
     local.add_argument("--center", nargs=3, type=float, required=True, metavar=("X", "Y", "Z"))
-    local.add_argument("--flexible-sidechains")
+    local.add_argument(
+        "--flexible-sidechains", metavar="RESIDUES",
+        help="Enable flexible sampling for specified residues (e.g. A:10-A:14). "
+             "The receptor is fixed during sampling by default.",
+    )
     local.add_argument("--local-score-model", type=existing, default=CHECKPOINTS / "local_score")
     local.add_argument("--local-confidence-model", type=existing, default=CHECKPOINTS / "local_confidence")
     local.add_argument("--box-size", type=float, default=28.0)

@@ -107,6 +107,43 @@ def test_cascade_cli_materializes_frozen_selector_output(tmp_path, monkeypatch):
     )
     assert cli.cascade_command(args) == 0
     assert (output / "final_pose.sdf").read_text() == "SELECTED\n"
+    sampling = [command for command in commands if command[1] == "inference.py"]
+    assert len(sampling) == 2
+    assert all("--rigid" in command for command in sampling)
     selector = next(c for c in commands if c[1].endswith("upgrade_cascade_selection.py"))
     assert "--selection-only" in selector
     assert "--materialize-selected" in selector
+
+
+def test_local_cli_defaults_to_rigid_sampling_and_allows_explicit_flexibility(tmp_path, monkeypatch):
+    import pandas as pd
+
+    sys.path.insert(0, str(ROOT / "src"))
+    from cryodiffdock import cli
+
+    protein = tmp_path / "protein.pdb"
+    ligand = tmp_path / "ligand.sdf"
+    density_map = tmp_path / "map.mrc"
+    for path in (protein, ligand, density_map):
+        path.touch()
+    commands = []
+    monkeypatch.setattr(cli, "run", lambda command, cwd: commands.append(command))
+    base_args = [
+        "local", "--protein", str(protein), "--ligand", str(ligand),
+        "--map", str(density_map), "--center", "1", "2", "3", "--no-paahs",
+    ]
+    for name, residues in (("rigid", []), ("flexible", ["--flexible-sidechains", "A:10"])):
+        commands.clear()
+        output = tmp_path / name
+        args = cli.parser().parse_args(base_args + ["--output", str(output)] + residues)
+        assert args.func(args) == 0
+        sampling = [command for command in commands if command[1] == "inference.py"]
+        assert len(sampling) == 2
+        assert "--density_guidance" not in sampling[0]
+        assert "--density_guidance" in sampling[1]
+        assert all(("--rigid" in command) == (not residues) for command in sampling)
+        manifest = pd.read_csv(output / "input.csv")
+        if residues:
+            assert manifest.loc[0, "flexible_sidechains"] == "A:10"
+        else:
+            assert "flexible_sidechains" not in manifest.columns
