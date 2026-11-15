@@ -1,12 +1,9 @@
 # Checkpoints
 
-Large model files are intentionally excluded from Git. Before making a public
-release, place the five frozen checkpoints at the paths listed in
-`manifest.json`, calculate SHA-256 values, upload the files to a GitHub Release
-or Zenodo, and replace every `TODO` source and any empty checksum.
-
-Do not call the paper results reproducible until the Global score checkpoint,
-its pretrained backbone, and the Global confidence checkpoint are available.
+The five checkpoint files and YAML configurations are available in the
+[model weights release](https://github.com/YYYYYunsen/CryoDiffDock/releases/tag/weights-v1.0.0).
+Run `./install.sh` to download the pinned archive, verify its SHA-256 checksum,
+and install the files.
 
 The automated installer accepts this directory layout:
 

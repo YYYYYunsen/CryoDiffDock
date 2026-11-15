@@ -28,7 +28,7 @@
     }
   },
   "bundle": {
-    "source": "",
+    "source": "https://github.com/YYYYYunsen/CryoDiffDock/releases/download/weights-v1.0.0/cryodiffdock-weights-v1.0.0.zip",
     "directory": "cryodiffdock-weights-v1.0.0",
     "sha256": "6ed18e799489291b4b9305a4e72c1d60131a488c1f71382c00878f7142df5f93"
   }

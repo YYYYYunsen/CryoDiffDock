@@ -15,31 +15,27 @@ density. This release tree contains the code paths for:
 
 ## Release status
 
-The source code has been assembled into a standalone repository layout. It is
-not yet a complete archival release: the frozen paper checkpoints, their
-remaining SHA-256 values, and permanent download URLs must still be added. A
-compact 6PEK/EMD-20327 smoke input is included, while its redistribution record
-still needs final confirmation. See `RELEASE_CHECKLIST.md`. Do not advertise exact
-paper reproducibility until the checkpoints are verified and the pending
-end-to-end numerical regression tests are complete.
+The five inference checkpoints and their configurations are available through
+GitHub Releases. Checkpoint provenance against the archived paper runs and
+end-to-end numerical regression tests are pending. See `RELEASE_CHECKLIST.md`.
 
 ## Installation
 
 CUDA 11.7 and a CUDA-capable GPU are recommended. Inference on CPU is possible
 for some Local stages but is substantially slower.
 
-Run the installer with the CryoDiffDock weight ZIP or its extracted directory:
+Run the installer to download and verify the model weights automatically:
 
 ```bash
-./install.sh --weights /path/to/cryodiffdock-weights-v1.0.0.zip
+./install.sh
 conda activate cryodiffdock
 cryodiffdock doctor
 ```
 
-Once the public Zenodo file URL is set in `checkpoints/manifest.json`,
-`./install.sh` will download the ZIP, verify its SHA-256 checksum, and install
-the weights and YAML configurations under `checkpoints/`. To use a direct file
-URL before then, run `./install.sh --weights-url YOUR_ZIP_DOWNLOAD_URL`.
+The installer downloads the [model-weight ZIP (523 MiB)](https://github.com/YYYYYunsen/CryoDiffDock/releases/tag/weights-v1.0.0)
+from GitHub Releases and installs the five checkpoints and their YAML
+configurations under `checkpoints/`. If you already have the ZIP, use
+`./install.sh --weights /path/to/cryodiffdock-weights-v1.0.0.zip`.
 
 `environment-local.yml` and `environment-global.yml` retain the original engine
 environments for debugging version-sensitive behavior.

@@ -15,7 +15,7 @@
 - [x] Stage the exact Local score and confidence checkpoints locally and verify
       their recorded SHA-256 values (large files remain excluded from Git).
 - [ ] Copy the exact frozen Global score, backbone, and confidence checkpoints.
-- [ ] Record SHA-256 values and permanent GitHub Release or Zenodo URLs in
+- [x] Record SHA-256 values and the pinned GitHub Release download URL in
       `checkpoints/manifest.json`.
 - [x] Add a compact 6PEK/EMD-20327 smoke-test input bundle.
 - [ ] Confirm and document the redistribution terms for the 6PEK/EMD-20327 bundle.
