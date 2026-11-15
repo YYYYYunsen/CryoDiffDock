@@ -13,18 +13,23 @@
     },
     "global_score": {
       "path": "checkpoints/global_score/best_ema_model.pt",
-      "sha256": "",
+      "sha256": "acb2e179567b3afaa17e2202b8c1bf2ca86c466b9d67bafe908109dd7c31fa9a",
       "source": "TODO: copy the frozen paper checkpoint and publish it"
     },
     "global_pretrained_backbone": {
       "path": "checkpoints/global_pretrained/best_ema_inference_epoch_model.pt",
-      "sha256": "",
+      "sha256": "64afbdc97f6c700df0309162eb533ee6f2754c71412aca7a3a534a7239667260",
       "source": "TODO: publish the exact backbone used to restore BatchNorm statistics"
     },
     "global_confidence": {
       "path": "checkpoints/global_confidence/best_model.pt",
-      "sha256": "",
+      "sha256": "18d0fcc97fc55436786db02305ac61c734ad682aa5f8dee601555369c8461a57",
       "source": "TODO: publish the exact confidence checkpoint used for Top-20 ranking"
     }
+  },
+  "bundle": {
+    "source": "",
+    "directory": "cryodiffdock-weights-v1.0.0",
+    "sha256": "6ed18e799489291b4b9305a4e72c1d60131a488c1f71382c00878f7142df5f93"
   }
 }

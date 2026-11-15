@@ -3,15 +3,17 @@ set -euo pipefail
 ROOT=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 ENV_NAME=${CRYODIFFDOCK_ENV_NAME:-cryodiffdock}
 WEIGHTS=""
+WEIGHTS_URL=""
 SKIP_ENV=0
 
 usage() {
-  echo "Usage: ./install.sh [--weights /path/to/weight_bundle] [--skip-env]"
+  echo "Usage: ./install.sh [--weights /path/to/weights.zip] [--weights-url URL] [--skip-env]"
 }
 
 while (($#)); do
   case "$1" in
-    --weights) WEIGHTS=${2:?missing directory after --weights}; shift 2 ;;
+    --weights) WEIGHTS=${2:?missing path after --weights}; shift 2 ;;
+    --weights-url) WEIGHTS_URL=${2:?missing URL after --weights-url}; shift 2 ;;
     --skip-env) SKIP_ENV=1; shift ;;
     -h|--help) usage; exit 0 ;;
     *) echo "Unknown argument: $1" >&2; usage >&2; exit 2 ;;
@@ -41,10 +43,10 @@ fi
 
 if [[ -n $WEIGHTS ]]; then
   "${PYTHON[@]}" "$ROOT/scripts/install_weights.py" --from "$WEIGHTS"
-elif "${PYTHON[@]}" "$ROOT/scripts/fetch_checkpoints.py"; then
+elif "${PYTHON[@]}" "$ROOT/scripts/fetch_checkpoints.py" --bundle-url "$WEIGHTS_URL"; then
   :
 else
-  echo "Automatic download is not configured yet. Re-run with --weights /path/to/bundle." >&2
+  echo "Checkpoint download failed. You can also install with --weights /path/to/bundle.zip." >&2
   exit 1
 fi
 

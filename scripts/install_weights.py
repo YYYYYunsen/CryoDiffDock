@@ -7,6 +7,8 @@ import hashlib
 import json
 from pathlib import Path
 import shutil
+from tempfile import TemporaryDirectory
+from zipfile import ZipFile
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -35,15 +37,7 @@ def find_config(directory: Path) -> Path | None:
     return None
 
 
-def main() -> int:
-    parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--from", dest="source", required=True, type=Path,
-                        help="directory containing the five checkpoint directories")
-    parser.add_argument("--force", action="store_true", help="replace installed files")
-    args = parser.parse_args()
-    source = args.source.expanduser().resolve()
-    manifest_path = ROOT / "checkpoints" / "manifest.json"
-    manifest = json.loads(manifest_path.read_text())
+def install(source: Path, manifest: dict, force: bool = False) -> None:
     errors: list[str] = []
     plan: list[tuple[Path, Path]] = []
 
@@ -64,24 +58,52 @@ def main() -> int:
     if errors:
         raise SystemExit("Invalid weight bundle:\n  - " + "\n  - ".join(errors))
 
+    expected = {item["path"]: item.get("sha256") for item in manifest["files"].values()}
+    pending = []
     for source_path, target_path in plan:
-        target_path.parent.mkdir(parents=True, exist_ok=True)
-        if target_path.exists() and not args.force:
-            if sha256(source_path) != sha256(target_path):
-                raise SystemExit(f"Refusing to replace {target_path}; pass --force")
-            print(f"Already installed: {target_path.relative_to(ROOT)}")
-            continue
-        shutil.copy2(source_path, target_path)
-        print(f"Installed: {target_path.relative_to(ROOT)}")
-
-    expected = {item["path"]: item for item in manifest["files"].values()}
-    for relative, item in expected.items():
-        path = ROOT / relative
-        digest = sha256(path)
-        expected_digest = item.get("sha256", "")
-        if expected_digest and digest != expected_digest:
+        relative = target_path.relative_to(ROOT).as_posix()
+        digest = sha256(source_path)
+        if expected.get(relative) and digest != expected[relative]:
             raise SystemExit(f"SHA-256 mismatch for {relative}: {digest}")
-        print(f"Verified: {relative} ({digest})")
+        if target_path.exists():
+            if sha256(target_path) == digest:
+                continue
+            if not force:
+                raise SystemExit(f"Refusing to replace {target_path}; pass --force")
+        pending.append((source_path, target_path))
+
+    for source_path, target_path in pending:
+        target_path.parent.mkdir(parents=True, exist_ok=True)
+        with TemporaryDirectory(dir=target_path.parent) as staging:
+            staged = Path(staging) / target_path.name
+            shutil.copy2(source_path, staged)
+            staged.replace(target_path)
+        print(f"Installed: {target_path.relative_to(ROOT)}")
+    print("Verified all checkpoint files.")
+
+
+def install_bundle(archive: Path, manifest: dict, force: bool = False) -> None:
+    bundle = manifest["bundle"]
+    if sha256(archive) != bundle["sha256"]:
+        raise SystemExit(f"SHA-256 mismatch for weight bundle: {archive}")
+    with TemporaryDirectory(prefix="cryodiffdock-weights-") as directory:
+        with ZipFile(archive) as packaged:
+            packaged.extractall(directory)
+        install(Path(directory) / bundle["directory"], manifest, force)
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--from", dest="source", required=True, type=Path,
+                        help="weight bundle ZIP or extracted directory")
+    parser.add_argument("--force", action="store_true", help="replace installed files")
+    args = parser.parse_args()
+    source = args.source.expanduser().resolve()
+    manifest = json.loads((ROOT / "checkpoints" / "manifest.json").read_text())
+    if source.is_file():
+        install_bundle(source, manifest, args.force)
+    else:
+        install(source, manifest, args.force)
     return 0
 
 

@@ -28,17 +28,18 @@ end-to-end numerical regression tests are complete.
 CUDA 11.7 and a CUDA-capable GPU are recommended. Inference on CPU is possible
 for some Local stages but is substantially slower.
 
-Prepare a weight bundle with the layout documented in `checkpoints/README.md`,
-then run the automated installer:
+Run the installer with the CryoDiffDock weight ZIP or its extracted directory:
 
 ```bash
-./install.sh --weights /path/to/cryodiffdock-weights
+./install.sh --weights /path/to/cryodiffdock-weights-v1.0.0.zip
 conda activate cryodiffdock
 cryodiffdock doctor
 ```
 
-After permanent checkpoint URLs are added to `checkpoints/manifest.json`,
-`./install.sh` without `--weights` will download and verify them automatically.
+Once the public Zenodo file URL is set in `checkpoints/manifest.json`,
+`./install.sh` will download the ZIP, verify its SHA-256 checksum, and install
+the weights and YAML configurations under `checkpoints/`. To use a direct file
+URL before then, run `./install.sh --weights-url YOUR_ZIP_DOWNLOAD_URL`.
 
 `environment-local.yml` and `environment-global.yml` retain the original engine
 environments for debugging version-sensitive behavior.

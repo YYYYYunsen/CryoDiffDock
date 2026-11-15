@@ -29,6 +29,8 @@ cryodiffdock-weights/
     └── model_parameters.yml
 ```
 
-Install it with `./install.sh --weights /path/to/cryodiffdock-weights`.
+Install the ZIP with `./install.sh --weights /path/to/cryodiffdock-weights-v1.0.0.zip`
+or pass the extracted directory to `--weights`. For automatic download, set
+`bundle.source` in `manifest.json` to the direct URL of the published ZIP.
 Model configuration files are required because a `.pt` state dictionary alone
 does not define the network architecture.
