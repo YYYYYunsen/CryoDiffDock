@@ -18,15 +18,12 @@ cryodiffdock demo
 
 The demo runs known-pocket Local docking on [9CF5](examples/9CF5/README.md). Open the printed **`report.html`** path to see the predicted pose and its symmetry-corrected RMSD against the deposited ligand. The archived benchmark result is 1.24 Å. The report shows the RMSD measured in the new run alongside that value.
 
-<details>
-<summary>Installation checks and offline weights</summary>
+### Installation checks and offline weights
 
 - Run `cryodiffdock doctor` to check dependencies and installed checkpoints.
 - Run `cryodiffdock demo --check` to validate the example inputs, Local weights, and CUDA before docking.
 - If you already have the ZIP, run `./install.sh --weights /path/to/cryodiffdock-weights-v1.0.0.zip`.
 - If you used Mamba or Micromamba, activate `cryodiffdock` with that manager. The original engine environments are available in [`environment-local.yml`](environment-local.yml) and [`environment-global.yml`](environment-global.yml).
-
-</details>
 
 ## Choose a docking mode
 
@@ -77,14 +74,11 @@ cryodiffdock local \
 
 Local samples baseline and density-guided poses with a rigid receptor by default, ranks their union by map agreement, and runs hierarchical search followed by physical refinement. Conditional repair can adjust nearby side chains. The final pose is `final_pose.sdf` and stage records are under `paahs/`.
 
-<details>
-<summary>Local sampling and refinement options</summary>
+#### Local sampling and refinement options
 
 - Use `--flexible-sidechains A:10-A:14` to enable flexible sampling for specified residues.
 - Use `--no-paahs` to stop at the earlier V2 search output under `search/v2_selected/`.
 - Use `cryodiffdock paahs` to refine an existing search ensemble. The [physical refinement workflow](docs/PAAHS_PUBLIC_WORKFLOW.md) documents the required manifests and score tables.
-
-</details>
 
 ### Anchor a known ligand fragment
 
@@ -104,8 +98,7 @@ Replace the example indices with **one-based heavy-atom indices in the full liga
 
 Anchor restricts torsions that would deform the placed fragment and guides the free atoms against density. Candidate screening checks anchor deviation, receptor clashes, stereochemistry, and coverage by the map. The default maximum anchor deviation is **0.5 Å per atom**. If all candidates fail, the report shows **Needs review** and lists the reasons.
 
-<details>
-<summary>Exit torsion scan and local density refinement</summary>
+#### Exit torsion scan and local density refinement
 
 Add `--exit-dihedrals EXIT NEXT` to run restrained repair, a two-bond torsion scan, and local density refinement after sampling. Each dihedral takes four comma-separated, one-based heavy-atom indices. Point the first central bond from the anchor toward the free fragment and choose the next rotatable bond in the same direction. The indices depend on your ligand.
 
@@ -114,8 +107,6 @@ Add `--exit-dihedrals EXIT NEXT` to run restrained repair, a two-bond torsion sc
 - Add `--reuse-sampling PATH_TO_PREVIOUS_OUTPUT` with the same inputs and a new `--output` to refine existing samples on CPU. Use `--refinement-threads` to parallelize the exit scan.
 
 The report links both `candidate_scores.csv` and `refined_scores.csv`. Anchor deviation measures agreement with the supplied restraint. Density scores measure fit to the same map used during optimization.
-
-</details>
 
 ### Cascade
 
@@ -156,8 +147,7 @@ If a **demo** or **Anchor** run fails, open the report for the failing stage and
 
 The five inference checkpoints and their configurations are published in the weight release. Verification against archived paper runs and the full numerical regression of the Cascade selector against Figure 7 remain pending. See the [release checklist](RELEASE_CHECKLIST.md).
 
-<details>
-<summary>Ranking details</summary>
+### Ranking details
 
 Global computes 24 scalar and 6 vector shell channels and ranks poses using
 `confidence_z + 0.5*density_mean_z + residual_shape_corr_z`. The default
@@ -166,15 +156,10 @@ at both density scales. Eligible Local branches are compared using equal-weight
 reciprocal-rank fusion of Global site rank, Local basin-NCC rank, and shared-map
 NCC rank. The selector uses neither a reference ligand nor cohort-fitted parameters.
 
-</details>
-
 ## Citation and credits
 
 Please cite the upstream DiffDock and DiffDock-Pocket work when using this software. See [third-party credits](THIRD_PARTY.md) and the [license](LICENSE). The CryoDiffDock citation will be added once a persistent manuscript identifier is available.
 
-<details>
-<summary>Graphical abstract</summary>
+### Graphical abstract
 
 ![Graphical abstract of cryo-EM density-guided ligand docking](docs/assets/graphical_abstract.png)
-
-</details>
