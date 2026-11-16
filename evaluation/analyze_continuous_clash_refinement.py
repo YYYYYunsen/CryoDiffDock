@@ -120,8 +120,12 @@ def main() -> int:
         "overall_clash_free_pct": float(
             100.0 * (frame["final_post_severe_clash_count"] == 0).mean()
         ),
-        "target_resolution_pct": float(100.0 * targets["final_resolved"].mean()),
-        "total_clash_reduction_pct": float(100.0 * (1.0 - post_total / pre_total)),
+        "target_resolution_pct": (
+            float(100.0 * targets["final_resolved"].mean()) if len(targets) else None
+        ),
+        "total_clash_reduction_pct": (
+            float(100.0 * (1.0 - post_total / pre_total)) if pre_total else None
+        ),
         "v2_residual_clashes": int(targets["v2_post_severe_clash_count"].sum()),
         "v3_combined_residual_clashes": post_total,
         "additional_runtime_hours": float(frame["v3_runtime_seconds"].sum() / 3600.0),

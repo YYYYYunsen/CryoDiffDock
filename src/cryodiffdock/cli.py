@@ -18,9 +18,10 @@ PREPROCESS = ROOT / "preprocessing"
 CHECKPOINTS = ROOT / "checkpoints"
 
 
-def run(command: list[str], cwd: Path, *, env: dict[str, str] | None = None) -> None:
-    print("+", " ".join(command), flush=True)
-    subprocess.run(command, cwd=cwd, env=env, check=True)
+def run(command: list[str], cwd: Path, *, env: dict[str, str] | None = None, log=None) -> None:
+    print("+", " ".join(command), file=log, flush=True)
+    subprocess.run(command, cwd=cwd, env=env, check=True, stdout=log,
+                   stderr=subprocess.STDOUT if log is not None else None)
 
 
 def paahs_environment() -> dict[str, str]:
@@ -86,15 +87,19 @@ def write_manifest(args, crop: Path, destination: Path) -> None:
     pd.DataFrame([row]).to_csv(destination, index=False)
 
 
-def prepare_crop(args, output: Path) -> Path:
+def prepare_crop(args, output: Path, *, log=None) -> Path:
     crop = output / "density_crop.npz"
-    run([
+    if args.map.suffix.lower() == ".npz":
+        shutil.copyfile(args.map, crop)
+        return crop
+    command = [
         sys.executable, str(LOCAL / "prepare_density_guidance_crop.py"),
         "--map", str(args.map), "--output", str(crop),
         "--center-x", str(args.center[0]), "--center-y", str(args.center[1]),
         "--center-z", str(args.center[2]), "--box-size", str(args.box_size),
         "--spacing", str(args.spacing),
-    ], LOCAL)
+    ]
+    run(command, LOCAL, **({"log": log} if log is not None else {}))
     return crop
 
 
@@ -361,6 +366,15 @@ def parser() -> argparse.ArgumentParser:
     sub = result.add_subparsers(dest="command", required=True)
     doctor = sub.add_parser("doctor", help="check dependencies and model files")
     doctor.set_defaults(func=doctor_command)
+    from .anchor import add_anchor_parser
+    from .demo import demo_command
+
+    add_anchor_parser(sub)
+
+    demo = sub.add_parser("demo", help="run the 9CF5 known-pocket example and write a report")
+    demo.add_argument("--output", type=Path, help="new or empty output directory")
+    demo.add_argument("--check", action="store_true", help="validate inputs and runtime without docking")
+    demo.set_defaults(func=demo_command)
     local = sub.add_parser("local", help="known-pocket Local inference and hierarchical search")
     add_common(local)
     local.add_argument("--center", nargs=3, type=float, required=True, metavar=("X", "Y", "Z"))

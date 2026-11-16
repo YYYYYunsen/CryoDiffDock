@@ -12,6 +12,8 @@ density. This release tree contains the code paths for:
   vector cryo-EM ring features.
 - **CryoDiffDock-Cascade**: Global Top-5 site proposals followed by the frozen
   Local refinement protocol.
+- **Fragment-anchored docking** keeps a placed fragment restrained while
+  sampling the rest of the ligand against experimental density (experimental).
 
 ## Release status
 
@@ -39,6 +41,25 @@ configurations under `checkpoints/`. If you already have the ZIP, use
 
 `environment-local.yml` and `environment-global.yml` retain the original engine
 environments for debugging version-sensitive behavior.
+
+## Run the 9CF5 demo
+
+After installation and environment activation, run this on a Linux GPU node:
+
+```bash
+cryodiffdock demo
+```
+
+Open the printed `report.html` path in a browser. The report links to the
+predicted SDF, run log, and a `view.cxc` script to open in ChimeraX. The overlay
+shows the prediction in orange and deposited reference in cyan. The report
+compares the new run's symmetry-corrected RMSD with the archived 1.24 Å Local
+result. This example uses a known pocket centered on the deposited ligand.
+
+Use `cryodiffdock demo --check` to check example inputs, weights, and CUDA
+before running inference. Failures are recorded in `report.html`,
+`summary.json`, and `run.log`. Each run gets its own output directory,
+or pass `--output PATH` to specify a new or empty directory.
 
 ## Inputs
 
@@ -73,6 +94,54 @@ To run the same reference-free PAAHS pipeline on already generated ensembles,
 use `cryodiffdock paahs` with the blind baseline/search manifests and per-pose
 NCC table. The exact column contract and frozen configuration files are
 documented in [the PAAHS workflow](docs/PAAHS_PUBLIC_WORKFLOW.md).
+
+## Anchor a known ligand fragment
+
+Use `anchor` when a fragment already has a trusted pose and the rest of the
+ligand needs to be fitted to density.
+
+```bash
+cryodiffdock anchor \
+  --protein receptor.pdb --ligand full_ligand.sdf \
+  --reference placed_fragment.sdf --anchor-atoms 6 8 9 10 11 12 \
+  --map ligand_residual.mrc --output outputs/anchored
+```
+
+Replace the example indices with the **one-based heavy-atom indices** of the
+full ligand, listed in the order of the heavy atoms in the reference fragment.
+Supply at least three non-collinear reference atoms and leave at least one atom
+free. The receptor, reference, and map must use the same coordinate frame.
+For a long ligand, increase `--box-size` or use a larger prepared NPZ crop that
+covers the free fragment. If you use a cropped receptor for sampling, pass
+the full receptor as `--clash-protein` for steric guidance and screening.
+Add `--check` to validate setup before sampling.
+
+For a ligand with a long free fragment, pass `--exit-dihedrals EXIT NEXT`
+to run restrained repair, a two-bond torsion scan, and local masked-density
+refinement after sampling. Each dihedral is a comma-separated list of four
+one-based heavy-atom indices. Point the first central bond from the anchor
+toward the free fragment. Choose the second in the same direction on the next
+rotatable bond. For example, the VK3-to-MK9 mapping uses
+`--exit-dihedrals 6,8,14,15 8,14,15,16`. The indices depend on the input ligand.
+
+To refine samples you already generated, supply the same inputs, the two
+dihedrals, `--reuse-sampling PATH_TO_PREVIOUS_OUTPUT` and a new `--output`.
+Refinement uses the CPU. Increase `--refinement-threads` to parallelize the exit
+scan. The report links to the original `candidate_scores.csv` and the new
+`refined_scores.csv` so you can inspect both stages.
+
+During reverse diffusion, the anchor is aligned to the reference after each
+update and torsions that deform it are suppressed. Map gradients act on the
+free atoms, with a soft receptor-clash penalty. Candidate selection ranks eligible poses by free-fragment NCC after
+checking anchor deviation, receptor clashes, stereochemistry, and map bounds.
+The default maximum per-atom anchor deviation is 0.5 Å. If no candidate passes,
+the run reports **Needs review** and preserves the candidates and their
+diagnostics in `candidate_scores.csv`. Open `report.html` for results and
+`view.cxc` in ChimeraX to inspect a selected pose against the map.
+
+This experimental mode uses the supplied fragment as a geometric restraint.
+Anchor agreement measures restraint compliance, and the free-fragment density
+score uses the same map as sampling. The mode has no explicit tunnel prior.
 
 ## Global
 
