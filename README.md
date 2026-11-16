@@ -7,7 +7,9 @@ density.
 
 ## Choose a docking mode
 
-![Three docking modes. Global searches for candidate binding sites across the receptor. Local fits the whole ligand in a known pocket. Anchor restrains a placed fragment and fits the rest.](docs/assets/docking-modes.svg)
+![Three docking modes. Global searches for candidate binding sites across the receptor. Local fits the whole ligand in a known pocket. Anchor restrains a placed fragment and fits the rest.](docs/assets/docking-modes-structural.png)
+
+*Conceptual illustration. The turquoise fragment in Anchor marks the supplied restraint.*
 
 - [**Global**](#global) starts with an unknown binding site and ranks candidate sites and poses from the full map.
 - [**Local**](#local) starts with a known pocket and uses local density to search and physically refine the full ligand.
