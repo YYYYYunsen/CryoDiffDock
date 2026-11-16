@@ -1,0 +1,105 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="438" viewBox="0 0 1200 438" role="img" aria-labelledby="title desc">
+  <title id="title">Three CryoDiffDock docking modes</title>
+  <desc id="desc">Global searches for candidate pockets across the receptor. Local fits and refines a full ligand in a supplied pocket. Anchor restrains a placed fragment while sampling and fitting the rest.</desc>
+  <style>
+    text { font-family: system-ui, -apple-system, "Segoe UI", sans-serif; fill: #172938 }
+    .card { fill: #fff; stroke: #cfdde4; stroke-width: 1.5 }
+    .scene { fill: #f4f8fa }
+    .title { font-size: 27px; font-weight: 700 }
+    .subtitle { font-size: 17px; fill: #405768 }
+    .label { font-size: 17px; font-weight: 700 }
+    .body { font-size: 17px; fill: #344d5d }
+    .scene-label { font-size: 14px; font-weight: 650 }
+    .protein { fill: #dbe9e7; stroke: #5e7f80; stroke-width: 2.4 }
+    .density { fill: #e0eefc; fill-opacity: .72; stroke: #3476ad; stroke-width: 1.9 }
+    .pose { fill: none; stroke: #ac4d06; stroke-width: 3.4; stroke-linejoin: round; stroke-linecap: round }
+    .ghost { fill: none; stroke: #647581; stroke-width: 2.5; stroke-dasharray: 5 5; stroke-linejoin: round; stroke-linecap: round }
+    .anchor { fill: #c9ece8; stroke: #07756e; stroke-width: 3.2; stroke-linejoin: round }
+    .leader { fill: none; stroke: #527181; stroke-width: 1.4 }
+  </style>
+  <defs>
+    <path id="receptor" class="protein" d="M52 36C58 15 89 8 108 18C123 26 129 40 143 40C156 42 169 19 190 17C217 14 229 32 230 50C230 68 208 72 210 85C211 99 234 103 239 120C245 141 222 151 201 148C183 145 169 133 155 138C142 143 137 160 115 161C97 163 83 152 76 140C67 125 48 135 38 118C30 103 40 90 51 81C66 68 46 58 52 36Z"/>
+    <path id="pocket" class="protein" d="M0 18C24 12 41 15 61 34C74 46 84 54 100 49C114 45 117 30 133 27C146 24 154 31 159 41C164 50 169 56 182 53C199 50 204 23 228 18C249 14 271 24 296 21L296 0L0 0ZM0 125C26 129 43 124 54 111C65 101 80 99 97 111C114 121 126 124 145 117C163 110 167 103 184 108C205 114 215 130 238 128C257 125 269 118 296 124L296 146L0 146Z"/>
+    <path id="map" class="density" d="M54 77C55 61 70 52 86 53C100 53 107 64 119 64C131 64 144 53 158 55C173 56 181 70 195 70C207 69 219 63 230 70C244 80 231 95 218 97C205 99 193 92 181 92C168 92 160 106 144 102C129 99 119 87 106 89C88 93 72 105 60 93C56 88 53 83 54 77Z"/>
+    <path id="ring" d="M0-12L11-6V6L0 12L-11 6V-6Z"/>
+    <marker id="arrow" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto"><path d="M0 0L7 3.5L0 7Z" fill="#527181"/></marker>
+  </defs>
+
+  <rect class="card" x="8" y="8" width="384" height="422" rx="17"/>
+  <text class="title" x="27" y="47">Global</text>
+  <text class="subtitle" x="27" y="72">Where could the ligand bind?</text>
+  <rect class="scene" x="26" y="91" width="348" height="202" rx="11"/>
+  <g transform="translate(58 105) scale(.90)">
+    <use href="#receptor"/>
+    <path class="density" d="M105 44C113 38 132 42 138 51C146 65 132 72 121 72C108 72 98 60 105 44ZM176 93C187 85 202 90 205 100C208 113 195 121 183 115C171 112 167 100 176 93ZM74 110C85 104 97 105 101 115C107 127 97 136 84 134C71 132 65 116 74 110Z"/>
+    <g class="pose">
+      <use href="#ring" transform="translate(120 55) scale(.66)"/>
+      <use href="#ring" transform="translate(188 103) scale(.66)"/>
+      <use href="#ring" transform="translate(85 120) scale(.66)"/>
+    </g>
+  </g>
+  <path class="leader" d="M293 163L243 188"/>
+  <text class="scene-label" x="291" y="153" text-anchor="middle">Candidate sites</text>
+  <text class="scene-label" x="50" y="273">Receptor and cryo-EM density</text>
+  <text class="label" x="27" y="324">Input</text>
+  <text class="body" x="97" y="324">Receptor, full map, ligand</text>
+  <text class="label" x="27" y="375">Search</text>
+  <text class="body" x="97" y="375">Across the receptor</text>
+  <text class="label" x="27" y="405">Output</text>
+  <text class="body" x="97" y="405">Ranked sites and poses</text>
+
+  <rect class="card" x="408" y="8" width="384" height="422" rx="17"/>
+  <text class="title" x="427" y="47">Local</text>
+  <text class="subtitle" x="427" y="72">How does the ligand fit this pocket?</text>
+  <rect class="scene" x="426" y="91" width="348" height="202" rx="11"/>
+  <g transform="translate(452 116)">
+    <use href="#pocket"/>
+    <use href="#map"/>
+    <g class="ghost" transform="translate(2 0) rotate(-18 120 75)">
+      <use href="#ring" transform="translate(83 53) scale(.9)"/>
+      <path d="M93 48L107 58L120 56L136 67L154 69"/>
+    </g>
+    <path class="leader" d="M111 62L109 77" marker-end="url(#arrow)"/>
+    <g class="pose">
+      <use href="#ring" transform="translate(83 77)"/>
+      <path d="M94 71L112 77L130 76L145 88L162 80L178 83L196 76L215 84"/>
+    </g>
+  </g>
+  <rect x="528" y="264" width="144" height="21" rx="6" fill="#f4f8fa"/>
+  <text class="scene-label" x="600" y="279" text-anchor="middle">Known pocket</text>
+  <text class="label" x="427" y="324">Input</text>
+  <text class="body" x="497" y="324">Pocket center, local density,</text>
+  <text class="body" x="497" y="346">receptor and ligand</text>
+  <text class="label" x="427" y="375">Search</text>
+  <text class="body" x="497" y="375">Whole ligand within the pocket</text>
+  <text class="label" x="427" y="405">Output</text>
+  <text class="body" x="497" y="405">Refined ligand pose</text>
+
+  <rect class="card" x="808" y="8" width="384" height="422" rx="17"/>
+  <text class="title" x="827" y="47">Anchor</text>
+  <text class="subtitle" x="827" y="72">How does the rest of the ligand fit?</text>
+  <rect class="scene" x="826" y="91" width="348" height="202" rx="11"/>
+  <g transform="translate(852 116)">
+    <use href="#pocket"/>
+    <use href="#map"/>
+    <g class="ghost">
+      <path d="M94 71L112 77L129 69L147 57L166 62L180 53L195 60L213 51"/>
+      <path d="M94 71L111 82L119 99L137 104L153 95L170 105L188 102"/>
+    </g>
+    <g class="pose">
+      <path d="M94 71L112 77L130 76L145 88L162 80L178 83L196 76L215 84"/>
+    </g>
+    <use class="anchor" href="#ring" transform="translate(83 77)"/>
+  </g>
+  <text class="scene-label" x="850" y="279">Restrained fragment</text>
+  <path class="leader" d="M926 264L935 207"/>
+  <text class="scene-label" x="1031" y="279">Free fragment</text>
+  <path class="leader" d="M1074 264L1036 207"/>
+  <text class="label" x="827" y="324">Input</text>
+  <text class="body" x="897" y="324">Placed fragment, local density,</text>
+  <text class="body" x="897" y="346">receptor and full ligand</text>
+  <text class="label" x="827" y="375">Search</text>
+  <text class="body" x="897" y="375">Free fragment torsions</text>
+  <text class="label" x="827" y="405">Output</text>
+  <text class="body" x="897" y="405">Full poses that pass screening</text>
+</svg>

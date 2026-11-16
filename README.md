@@ -3,17 +3,16 @@
 ![Graphical abstract of cryo-EM density-guided ligand docking](docs/assets/graphical_abstract.png)
 
 CryoDiffDock combines generative molecular docking with experimental cryo-EM
-density. This release tree contains the code paths for:
+density.
 
-- **CryoDiffDock-Local**: known-pocket diffusion, late-stage density guidance,
-  density/confidence reranking, hierarchical search, and final lazy PAAHS
-  physical refinement.
-- **CryoDiffDock-Global**: site-agnostic diffusion conditioned on scalar and
-  vector cryo-EM ring features.
-- **CryoDiffDock-Cascade**: Global Top-5 site proposals followed by the frozen
-  Local refinement protocol.
-- **Fragment-anchored docking** keeps a placed fragment restrained while
-  sampling the rest of the ligand against experimental density (experimental).
+## Choose a docking mode
+
+![Three docking modes. Global searches for candidate binding sites across the receptor. Local fits the whole ligand in a known pocket. Anchor restrains a placed fragment and fits the rest.](docs/assets/docking-modes.svg)
+
+- [**Global**](#global) starts with an unknown binding site and ranks candidate sites and poses from the full map.
+- [**Local**](#local) starts with a known pocket and uses local density to search and physically refine the full ligand.
+- [**Anchor**](#anchor-a-known-ligand-fragment) starts with a placed fragment and uses density to sample the rest of the ligand. Exit torsion scanning and local density refinement can be enabled for long flexible fragments. This mode is experimental.
+- [**Cascade**](#cascade) starts with an unknown site, proposes up to five pockets with Global, and runs Local refinement at those pockets.
 
 ## Release status
 
